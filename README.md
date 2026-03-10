@@ -17,7 +17,7 @@ At tax time: one command generates accountant-ready files, full ledger, category
 Every receipt, every monthly bank statement, every digital confirmation feeds the same running ledger all year. When April arrives, run one command and get 5 accountant-ready files: full ledger, category summary with Schedule C line references, flagged items, missing receipts list, and an accountant cover note. No scrambling. No data entry marathon.
 
 **Actual IRS accuracy, not vibes.**
-Categories map to real Schedule C lines. The 50% meals limitation is enforced: you cannot accidentally deduct a full business lunch. Equipment over $2,500 gets flagged for Section 179 review. Contractor payments are tracked against the 1099-NEC threshold (updated for OBBBA 2025: $600 for 2025 payments, $2,000 for 2026+). A vendor knowledge base auto-classifies 40+ common tools (Canva, OpenAI, Meta Ads, Stripe, etc.) from day one.
+Categories map to real Schedule C lines. The 50% meals limitation is enforced: you cannot accidentally deduct a full business lunch. Equipment over $2,500 gets flagged for Section 179 review. Contractor payments are tracked against the 1099-NEC threshold (updated for OBBBA 2025: $600 for 2025 payments, $2,000 for 2026+). A vendor knowledge base auto-classifies 90+ common tools (Make.com, OpenAI, GoHighLevel, n8n, ElevenLabs, Stripe, and more) from day one.
 
 **Monthly routine is 2 minutes.**
 Download your bank statement. Say "here's my March statement" and attach the CSV. Claude parses it, removes duplicates using fuzzy matching (catches "AMZN MKTP" = Amazon), classifies every line, and shows you what needs review.
@@ -143,7 +143,7 @@ tax-receipt-autopilot/
 │   ├── ocr-tips.md               # Receipt image extraction guide
 │   ├── batch-receipts.md         # Folder-based batch receipt processing workflow
 │   ├── gmail-sync.md             # Gmail MCP receipt sync procedure
-│   ├── vendors.md                # 61 pre-classified vendors (auto-seeded at setup)
+│   ├── vendors.md                # 91 pre-classified vendors (auto-seeded at setup)
 │   ├── local-file-mode.md        # Local JSON file format and operation patterns
 │   ├── income-tracking.md        # income.json schema and 8 income categories
 │   ├── mileage-log.md            # IRS mileage logging requirements and rates
