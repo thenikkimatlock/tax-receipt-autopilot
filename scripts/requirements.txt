@@ -1,0 +1,19 @@
+# Tax Receipt Autopilot — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# PDF bank statement parsing (parse_bank_statement.py)
+pdfplumber>=0.10.0
+
+# Flexible date string parsing (parse_bank_statement.py)
+python-dateutil>=2.8.0
+
+# Fuzzy vendor name matching for duplicate detection (detect_duplicates.py)
+# Note: thefuzz is the official successor to the deprecated fuzzywuzzy package.
+# detect_duplicates.py has a pure-Python fallback if thefuzz is not installed,
+# but thefuzz is strongly recommended for accuracy.
+thefuzz>=0.19.0
+
+# python-Levenshtein is OPTIONAL — makes thefuzz ~10x faster but requires a C compiler.
+# On Windows without Build Tools for Visual Studio, this will fail to install.
+# The install scripts (install.sh / install.bat) attempt it and skip gracefully on failure.
+# Do NOT add it here — it is installed separately by the install scripts.

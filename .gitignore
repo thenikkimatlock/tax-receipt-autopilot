@@ -1,0 +1,10 @@
+# Tax data and config — generated at runtime, never commit
+data/
+config.json
+config-*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

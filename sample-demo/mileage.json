@@ -1,0 +1,5 @@
+[
+  {"id":"mi001","date":"2026-01-15","purpose":"Client meeting - VoiceForeman demo","miles":12.4,"origin":"Home","destination":"Starbucks - downtown","deductible_amount":8.99},
+  {"id":"mi002","date":"2026-02-08","purpose":"Post office - mail client contracts","miles":5.2,"origin":"Home","destination":"USPS Branch","deductible_amount":3.77},
+  {"id":"mi003","date":"2026-03-05","purpose":"Client site visit - contractor walkthrough","miles":18.7,"origin":"Home","destination":"Client location","deductible_amount":13.56}
+]

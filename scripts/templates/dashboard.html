@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Receipt Autopilot — {{TAX_YEAR}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:      #F9F7F2;
+  --paper-2:    #F2EFE8;
+  --ink:        #111010;
+  --ink-2:      #444240;
+  --ink-3:      #777470;
+  --ink-4:      #AEADA9;
+  --rule:       #111010;
+  --rule-mid:   rgba(17,16,16,0.20);
+  --rule-faint: rgba(17,16,16,0.09);
+  --red:        #B81C0C;
+  --red-bg:     rgba(184,28,12,0.06);
+  --green:      #1A5432;
+  --green-bg:   rgba(26,84,50,0.06);
+  --amber:      #7A4E00;
+  --amber-bg:   rgba(122,78,0,0.06);
+  --f-serif: 'Newsreader', Georgia, serif;
+  --f-mono:  'Courier Prime', 'Courier New', monospace;
+  --max-w: 1200px;
+  --pad: 48px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); font-family: var(--f-serif); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad) 80px; background: var(--paper); }
+body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 8000;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.038'/%3E%3C/svg%3E");
+  background-repeat: repeat; background-size: 300px 300px; }
+
+/* MASTHEAD */
+.masthead { padding: 36px 0 0; border-bottom: 3px solid var(--ink); }
+.mh-top { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--rule-mid); margin-bottom: 12px; }
+.mh-slug { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.18em; color: var(--ink-3); text-transform: uppercase; }
+.mh-title { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; text-align: center; flex: 1; }
+.mh-meta { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); text-align: right; letter-spacing: 0.05em; }
+.mh-bottom { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; }
+.mh-business { font-size: 13px; font-style: italic; color: var(--ink-2); }
+.mh-year { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); }
+
+/* ALERTS */
+.alerts { margin: 18px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.alert { display: flex; gap: 10px; align-items: baseline; font-family: var(--f-mono); font-size: 11px; padding: 7px 12px; border-radius: 2px; }
+.alert.warning { background: var(--amber-bg); color: var(--amber); border-left: 2px solid var(--amber); }
+.alert.info    { background: var(--green-bg);  color: var(--green);  border-left: 2px solid var(--green); }
+.alert-icon { font-weight: 700; flex-shrink: 0; }
+
+/* MONTH NAV */
+.month-nav { margin: 28px 0 0; display: flex; gap: 0; border-bottom: 1px solid var(--rule-mid); }
+.mn-tab { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 14px; cursor: pointer; border: none; background: none; color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+.mn-tab:hover { color: var(--ink); }
+.mn-tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 700; }
+
+/* KPI ROW */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 24px 0 0; border: 1px solid var(--rule-mid); }
+.kpi { padding: 18px 20px; border-right: 1px solid var(--rule-mid); }
+.kpi:last-child { border-right: none; }
+.kpi-label { font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.kpi-value.red   { color: var(--red); }
+.kpi-value.green { color: var(--green); }
+.kpi-value.amber { color: var(--amber); }
+.kpi-sub { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); margin-top: 4px; }
+
+/* TWO-COL LAYOUT */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 28px 0 0; }
+.full-col { margin: 24px 0 0; }
+
+/* SECTION HEADER */
+.section-hd { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--rule); padding-bottom: 6px; margin-bottom: 16px; }
+.section-title { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.section-sub { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+
+/* CATEGORY BARS */
+.cat-list { display: flex; flex-direction: column; gap: 10px; }
+.cat-row { display: flex; flex-direction: column; gap: 3px; }
+.cat-row-top { display: flex; justify-content: space-between; align-items: baseline; }
+.cat-name { font-size: 12px; color: var(--ink-2); }
+.cat-amt  { font-family: var(--f-mono); font-size: 12px; font-weight: 700; }
+.cat-bar-track { height: 4px; background: var(--rule-faint); border-radius: 2px; overflow: hidden; }
+.cat-bar-fill  { height: 100%; background: var(--ink-2); border-radius: 2px; transition: width .6s ease; }
+.cat-bar-fill.ded { background: var(--green); }
+.cat-bar-fill.non-ded { background: var(--ink-4); }
+
+/* INCOME SECTION */
+.income-list { display: flex; flex-direction: column; gap: 8px; }
+.income-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule-faint); }
+.income-row:last-child { border-bottom: none; }
+.income-label { font-size: 13px; }
+.income-amt   { font-family: var(--f-mono); font-size: 13px; font-weight: 700; color: var(--green); }
+.income-count { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); margin-left: 10px; }
+
+/* MILEAGE SECTION */
+.mileage-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule-mid); margin-bottom: 16px; }
+.mileage-kpi { padding: 14px 16px; border-right: 1px solid var(--rule-mid); }
+.mileage-kpi:last-child { border-right: none; }
+.mileage-kpi-label { font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+.mileage-kpi-value { font-size: 22px; font-weight: 600; }
+.mileage-kpi-sub { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); margin-top: 2px; }
+.mileage-list { display: flex; flex-direction: column; gap: 0; max-height: 200px; overflow-y: auto; }
+.mileage-row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--rule-faint); font-size: 12px; }
+.mileage-row:last-child { border-bottom: none; }
+.mileage-date { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); flex-shrink: 0; width: 64px; }
+.mileage-route { flex: 1; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mileage-miles { font-family: var(--f-mono); font-size: 11px; flex-shrink: 0; }
+.mileage-ded   { font-family: var(--f-mono); font-size: 11px; color: var(--green); flex-shrink: 0; width: 56px; text-align: right; }
+.mileage-empty { font-size: 12px; color: var(--ink-3); font-style: italic; padding: 16px 0; }
+
+/* QUARTERLY ESTIMATE */
+.qe-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid var(--rule-mid); }
+.qe-cell { padding: 16px 18px; border-right: 1px solid var(--rule-mid); }
+.qe-cell:last-child { border-right: none; }
+.qe-label { font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.qe-value { font-size: 22px; font-weight: 600; }
+.qe-value.red   { color: var(--red); }
+.qe-value.green { color: var(--green); }
+.qe-note { font-family: var(--f-mono); font-size: 9px; color: var(--ink-4); margin-top: 6px; line-height: 1.4; }
+
+/* HEATMAP */
+.heatmap-wrap { margin-top: 8px; }
+.hm-grid { display: grid; grid-template-columns: 28px repeat(7, 1fr); gap: 3px; }
+.hm-week-lbl { font-family: var(--f-mono); font-size: 9px; color: var(--ink-4); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+.hm-dow { font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); text-align: center; padding-bottom: 4px; }
+.hm-cell { aspect-ratio: 1; border-radius: 2px; cursor: pointer; position: relative; display: flex; align-items: flex-start; justify-content: flex-end; padding: 2px 3px; }
+.hm-cell.empty  { background: transparent; cursor: default; }
+.hm-cell.t0     { background: var(--rule-faint); }
+.hm-cell.t1     { background: rgba(26,84,50,0.18); }
+.hm-cell.t2     { background: rgba(26,84,50,0.42); }
+.hm-cell.t3     { background: rgba(26,84,50,0.75); }
+.hm-day-num { font-family: var(--f-mono); font-size: 8px; color: var(--ink-3); }
+.hm-tooltip { display: none; position: fixed; z-index: 100; background: var(--ink); color: var(--paper); font-family: var(--f-mono); font-size: 11px; padding: 6px 10px; border-radius: 2px; pointer-events: none; white-space: nowrap; }
+.hm-tooltip.show { display: block; }
+
+/* TRANSACTION LOG */
+.log { margin: 28px 0 0; }
+.log-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 0; }
+.log-title { font-size: 15px; font-weight: 600; }
+.log-controls { display: flex; align-items: center; gap: 16px; }
+.log-count { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+.log-filters { display: flex; gap: 2px; }
+.lf { font-family: var(--f-mono); font-size: 10px; padding: 3px 10px; border: 1px solid var(--rule-mid); background: none; cursor: pointer; color: var(--ink-3); letter-spacing: 0.05em; }
+.lf.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.log-table { width: 100%; border-collapse: collapse; margin-top: 0; }
+.log-table thead th { font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); padding: 10px 8px 8px; text-align: left; border-bottom: 1px solid var(--rule-mid); white-space: nowrap; }
+.log-table thead th.r { text-align: right; }
+.log-table thead th.c { text-align: center; }
+.log-table tbody tr { border-bottom: 1px solid var(--rule-faint); }
+.log-table tbody tr:hover { background: var(--paper-2); }
+.log-table tbody td { padding: 9px 8px; font-size: 13px; vertical-align: top; }
+.td-date   { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.td-vendor { font-weight: 400; }
+.td-cat    { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+.td-status { text-align: center; }
+.td-amt    { font-family: var(--f-mono); font-size: 13px; text-align: right; white-space: nowrap; }
+.td-ded    { font-family: var(--f-mono); font-size: 10px; text-align: right; color: var(--green); white-space: nowrap; }
+.st { font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; }
+.st.matched { background: var(--green-bg); color: var(--green); }
+.st.missing { background: var(--red-bg);   color: var(--red); }
+.st.review  { background: var(--amber-bg); color: var(--amber); }
+.log-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--rule-mid); padding: 10px 8px 0; margin-top: 0; }
+.log-footer-label { font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+.log-footer-ref   { font-family: var(--f-mono); font-size: 9px; color: var(--ink-4); margin-top: 2px; }
+.log-footer-total-label { font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); text-align: right; }
+.log-footer-total { font-family: var(--f-mono); font-size: 16px; font-weight: 700; text-align: right; margin-top: 2px; }
+.log-pagination { display: flex; gap: 4px; justify-content: flex-end; margin-top: 14px; align-items: center; }
+.pg-btn { font-family: var(--f-mono); font-size: 10px; padding: 4px 10px; border: 1px solid var(--rule-mid); background: none; cursor: pointer; color: var(--ink-3); }
+.pg-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.pg-btn:disabled { opacity: 0.3; cursor: default; }
+.pg-ellipsis { font-family: var(--f-mono); font-size: 10px; color: var(--ink-4); }
+
+/* EMPTY STATE */
+.empty-state { padding: 40px 0; text-align: center; }
+.empty-state-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.empty-state-body { font-size: 13px; color: var(--ink-3); }
+
+/* PAGE FOOTER */
+.page-footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--rule-mid); display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 9px; color: var(--ink-4); }
+
+/* EXPORT BUTTONS */
+.export-bar { display: flex; gap: 8px; margin-top: 16px; }
+.btn { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.08em; padding: 6px 16px; border: 1px solid var(--rule-mid); background: none; cursor: pointer; color: var(--ink-2); }
+.btn:hover { background: var(--paper-2); }
+.btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.primary:hover { opacity: 0.85; }
+
+@media (max-width: 900px) {
+  :root { --pad: 20px; }
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .kpi:nth-child(3) { border-right: none; }
+  .two-col { grid-template-columns: 1fr; }
+  .qe-grid { grid-template-columns: 1fr; }
+  .qe-cell { border-right: none; border-bottom: 1px solid var(--rule-mid); }
+  .qe-cell:last-child { border-bottom: none; }
+  .mh-title { font-size: 26px; }
+}
+@media print {
+  body::after { display: none; }
+  .month-nav, .export-bar, .log-filters, .log-pagination, .pg-btn { display: none !important; }
+  .log-table tbody tr:hover { background: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="mh-top">
+    <div class="mh-slug">Tax Receipt Autopilot</div>
+    <div class="mh-title" id="mhTitle">Schedule C — Tax Year {{TAX_YEAR}}</div>
+    <div class="mh-meta" id="mhMeta">Generated<br>{{GENERATED}}</div>
+  </div>
+  <div class="mh-bottom">
+    <div class="mh-business" id="mhBusiness"></div>
+    <div class="mh-year" id="mhYear"></div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div class="alerts" id="alertBand"></div>
+
+<!-- MONTH TABS -->
+<div class="month-nav" id="monthNav"></div>
+
+<!-- KPI ROW -->
+<div class="kpi-row" id="kpiRow">
+  <div class="kpi"><div class="kpi-label">Total Expenses</div><div class="kpi-value" id="kpiExpenses">—</div><div class="kpi-sub" id="kpiExpensesSub"></div></div>
+  <div class="kpi"><div class="kpi-label">Deductible</div><div class="kpi-value green" id="kpiDeductible">—</div><div class="kpi-sub" id="kpiDeductibleSub"></div></div>
+  <div class="kpi"><div class="kpi-label">Income</div><div class="kpi-value green" id="kpiIncome">—</div><div class="kpi-sub" id="kpiIncomeSub"></div></div>
+  <div class="kpi"><div class="kpi-label">Net Profit / Loss</div><div class="kpi-value" id="kpiNet">—</div><div class="kpi-sub">after deductions</div></div>
+  <div class="kpi"><div class="kpi-label">Est. Tax Owed</div><div class="kpi-value amber" id="kpiTax">—</div><div class="kpi-sub">SE + fed income (est.)</div></div>
+</div>
+
+<!-- EXPENSE BREAKDOWN + INCOME -->
+<div class="two-col">
+  <div>
+    <div class="section-hd">
+      <div class="section-title">Expense Breakdown</div>
+      <div class="section-sub" id="catSub"></div>
+    </div>
+    <div class="cat-list" id="catList"></div>
+  </div>
+  <div>
+    <div class="section-hd">
+      <div class="section-title">Income</div>
+      <div class="section-sub" id="incomeSub"></div>
+    </div>
+    <div class="income-list" id="incomeList"></div>
+  </div>
+</div>
+
+<!-- MILEAGE + QUARTERLY ESTIMATE -->
+<div class="two-col">
+  <div>
+    <div class="section-hd">
+      <div class="section-title">Mileage Log</div>
+      <div class="section-sub" id="mileageSub"></div>
+    </div>
+    <div class="mileage-summary" id="mileageSummary"></div>
+    <div class="mileage-list" id="mileageList"></div>
+  </div>
+  <div>
+    <div class="section-hd">
+      <div class="section-title">Tax Estimate</div>
+      <div class="section-sub">YTD — estimates only</div>
+    </div>
+    <div class="qe-grid" id="qeGrid"></div>
+    <p style="font-family:var(--f-mono);font-size:9px;color:var(--ink-4);margin-top:10px;line-height:1.5;">
+      SE tax = net profit × 92.35% × 15.3%. Federal income estimate uses 12% bracket as a placeholder. These are rough estimates only — consult your accountant for accurate quarterly payments and safe harbor rules.
+    </p>
+  </div>
+</div>
+
+<!-- HEATMAP -->
+<div class="full-col">
+  <div class="section-hd">
+    <div class="section-title">Spending Heatmap</div>
+    <div class="section-sub" id="heatmapSub"></div>
+  </div>
+  <div class="heatmap-wrap">
+    <div class="hm-grid" id="heatmapGrid"></div>
+  </div>
+  <div class="hm-tooltip" id="hmTip"></div>
+</div>
+
+<!-- TRANSACTION LOG -->
+<div class="log">
+  <div class="log-head">
+    <div class="log-title">Receipt Log</div>
+    <div class="log-controls">
+      <div class="log-count" id="logCount"></div>
+      <div class="log-filters">
+        <button class="lf active" onclick="setFilter('all',this)">All</button>
+        <button class="lf" onclick="setFilter('missing',this)">Missing</button>
+        <button class="lf" onclick="setFilter('review',this)">Flagged</button>
+      </div>
+    </div>
+  </div>
+  <table class="log-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Vendor</th>
+        <th style="padding:0 8px">Category</th>
+        <th class="c">Receipt</th>
+        <th class="r">Amount</th>
+        <th class="r">Deductible</th>
+      </tr>
+    </thead>
+    <tbody id="logBody"></tbody>
+  </table>
+  <div class="log-footer">
+    <div class="log-footer-left">
+      <div class="log-footer-label" id="footerLabel"></div>
+      <div class="log-footer-ref">Schedule C &middot; Tax Year {{TAX_YEAR}}</div>
+    </div>
+    <div class="log-footer-right">
+      <div class="log-footer-total-label">Page Total</div>
+      <div class="log-footer-total" id="pageTotal">$0.00</div>
+    </div>
+  </div>
+  <div class="log-pagination" id="pagination"></div>
+</div>
+
+<!-- EXPORT BAR -->
+<div class="export-bar">
+  <button class="btn primary" onclick="exportCSV()">Export CSV</button>
+  <button class="btn" onclick="window.print()">Print / PDF</button>
+</div>
+
+<!-- PAGE FOOTER -->
+<div class="page-footer">
+  <div id="footerPath"></div>
+  <div>Re-run generate_dashboard.py for fresh data</div>
+</div>
+
+<!-- LEGAL DISCLOSURE -->
+<div style="margin-top:18px; padding-top:12px; border-top:1px solid var(--rule-mid); font-family:var(--f-mono); font-size:9px; color:var(--ink-4); line-height:1.6; text-align:center; max-width:680px; margin-left:auto; margin-right:auto;">
+  This dashboard is organizational tooling, not tax advice. Deductible amounts shown are estimates based on IRS Schedule C guidelines and may not reflect your actual tax liability. State tax treatment may differ from federal. The 50% meals limitation, Section 179 eligibility, and contractor payment thresholds are applied automatically but should be verified with a qualified tax professional before filing. This tool does not constitute legal, accounting, or financial advice. Consult a licensed CPA or tax advisor for guidance specific to your situation.
+</div>
+
+<script>
+// ── INJECTED DATA ──────────────────────────────────────────────────────────
+const DATA = %%DATA_JSON%%;
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let activeMonth = 'ytd';
+let activeFilter = 'all';
+let currentPage = 1;
+const PER_PAGE = 15;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const fmt = n => '$' + (n || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtNum = n => (n || 0).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 1});
+
+function monthLabel(ym) {
+  if (!ym) return '';
+  const [y, m] = ym.split('-');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return (names[parseInt(m) - 1] || m) + ' ' + y;
+}
+
+function filteredTxns() {
+  let txns = DATA.transactions;
+  if (activeMonth !== 'ytd') txns = txns.filter(t => t.date.startsWith(activeMonth));
+  if (activeFilter === 'missing') txns = txns.filter(t => t.receipt_status === 'missing');
+  if (activeFilter === 'review')  txns = txns.filter(t => t.receipt_status === 'review');
+  return txns;
+}
+
+function filteredIncome() {
+  let recs = DATA.income_records;
+  if (activeMonth !== 'ytd') recs = recs.filter(r => r.date.startsWith(activeMonth));
+  return recs;
+}
+
+function filteredMileage() {
+  let recs = DATA.mileage_records;
+  if (activeMonth !== 'ytd') recs = recs.filter(r => r.date.startsWith(activeMonth));
+  return recs;
+}
+
+function countUp(el, target, prefix = '$', decimals = 2) {
+  if (!el) return;
+  const dur = 600;
+  const steps = 30;
+  let step = 0;
+  const interval = setInterval(() => {
+    step++;
+    const v = target * (step / steps);
+    el.textContent = prefix + v.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+    if (step >= steps) { clearInterval(interval); el.textContent = prefix + target.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}); }
+  }, dur / steps);
+}
+
+// ── MASTHEAD ──────────────────────────────────────────────────────────────
+function renderMasthead() {
+  document.getElementById('mhBusiness').textContent = DATA.meta.business_name + (DATA.meta.entity_type ? ' \u00b7 ' + DATA.meta.entity_type : '');
+  document.getElementById('mhYear').textContent = 'Tax Year ' + DATA.meta.tax_year;
+  const fp = document.getElementById('footerPath');
+  if (fp) fp.textContent = 'Tax Receipt Autopilot';
+}
+
+// ── ALERTS ───────────────────────────────────────────────────────────────
+function renderAlerts() {
+  const band = document.getElementById('alertBand');
+  if (!DATA.alerts.length) { band.style.display = 'none'; return; }
+  band.innerHTML = DATA.alerts.map(a =>
+    `<div class="alert ${a.type}"><span class="alert-icon">${a.type === 'warning' ? '!' : 'i'}</span><span>${a.msg}</span></div>`
+  ).join('');
+}
+
+// ── MONTH TABS ────────────────────────────────────────────────────────────
+function renderMonthNav() {
+  const nav = document.getElementById('monthNav');
+  const months = DATA.all_months;
+  let html = `<button class="mn-tab ${activeMonth === 'ytd' ? 'active' : ''}" onclick="setMonth('ytd')">YTD</button>`;
+  months.forEach(m => {
+    html += `<button class="mn-tab ${activeMonth === m ? 'active' : ''}" onclick="setMonth('${m}')">${monthLabel(m)}</button>`;
+  });
+  nav.innerHTML = html;
+}
+
+function setMonth(m) {
+  activeMonth = m;
+  currentPage = 1;
+  renderMonthNav();
+  renderKPIs();
+  renderCategories();
+  renderIncome();
+  renderMileage();
+  renderQE();
+  renderHeatmap();
+  renderLog();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const txns = DATA.transactions.filter(t => activeMonth === 'ytd' || t.date.startsWith(activeMonth));
+  const inc  = filteredIncome();
+  const mi   = filteredMileage();
+
+  const expenses   = txns.reduce((s, t) => s + t.amount, 0);
+  const deductible = txns.reduce((s, t) => s + t.deductible_amount, 0);
+  const income     = inc.reduce((s, r) => s + r.amount, 0);
+  const miDed      = mi.reduce((s, r) => s + r.deductible_amount, 0);
+  const net        = income - deductible - miDed;
+  const seTax      = Math.max(0, net * 0.9235 * 0.153);
+  const fedTax     = Math.max(0, net * 0.12);
+  const totalTax   = seTax + fedTax;
+
+  countUp(document.getElementById('kpiExpenses'),   expenses, '$');
+  countUp(document.getElementById('kpiDeductible'), deductible, '$');
+  countUp(document.getElementById('kpiIncome'),     income, '$');
+
+  const netEl = document.getElementById('kpiNet');
+  if (netEl) {
+    netEl.className = 'kpi-value ' + (net >= 0 ? 'green' : 'red');
+    setTimeout(() => countUp(netEl, Math.abs(net), (net < 0 ? '-$' : '$')), 0);
+  }
+
+  const taxEl = document.getElementById('kpiTax');
+  if (taxEl) setTimeout(() => countUp(taxEl, totalTax, '$'), 0);
+
+  const txCount = txns.length;
+  const missCount = txns.filter(t => t.receipt_status === 'missing').length;
+  document.getElementById('kpiExpensesSub').textContent = `${txCount} transaction${txCount !== 1 ? 's' : ''} · ${missCount} missing receipt${missCount !== 1 ? 's' : ''}`;
+  document.getElementById('kpiDeductibleSub').textContent = expenses > 0 ? Math.round(deductible / expenses * 100) + '% of total' : '';
+  document.getElementById('kpiIncomeSub').textContent = `${inc.length} record${inc.length !== 1 ? 's' : ''}`;
+}
+
+// ── CATEGORY BARS ─────────────────────────────────────────────────────────
+function renderCategories() {
+  const txns = DATA.transactions.filter(t => activeMonth === 'ytd' || t.date.startsWith(activeMonth));
+  const bycat = {};
+  txns.forEach(t => {
+    if (!bycat[t.category]) bycat[t.category] = {label: t.category_label, total: 0, deductible: 0, count: 0};
+    bycat[t.category].total      += t.amount;
+    bycat[t.category].deductible += t.deductible_amount;
+    bycat[t.category].count      += 1;
+  });
+  const sorted = Object.entries(bycat).sort((a,b) => b[1].total - a[1].total);
+  const maxAmt = sorted.length ? sorted[0][1].total : 1;
+  const label = document.getElementById('catSub');
+  if (label) label.textContent = activeMonth === 'ytd' ? 'YTD — all months' : monthLabel(activeMonth);
+
+  const list = document.getElementById('catList');
+  if (!sorted.length) { list.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="empty-state-body">No expenses for this period.</div></div>'; return; }
+  list.innerHTML = sorted.map(([key, v]) => {
+    const pct = Math.round(v.total / maxAmt * 100);
+    const dedPct = v.total > 0 ? Math.round(v.deductible / v.total * 100) : 0;
+    return `<div class="cat-row">
+      <div class="cat-row-top">
+        <div class="cat-name">${v.label}</div>
+        <div class="cat-amt">${fmt(v.total)} <span style="font-size:10px;color:var(--ink-3);font-weight:400">(${fmt(v.deductible)} ded.)</span></div>
+      </div>
+      <div class="cat-bar-track">
+        <div class="cat-bar-fill ${key === 'personal' ? 'non-ded' : 'ded'}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INCOME ────────────────────────────────────────────────────────────────
+function renderIncome() {
+  const inc = filteredIncome();
+  const sub = document.getElementById('incomeSub');
+  if (sub) sub.textContent = activeMonth === 'ytd' ? 'YTD — all months' : monthLabel(activeMonth);
+
+  const bycat = {};
+  inc.forEach(r => {
+    if (!bycat[r.category]) bycat[r.category] = {label: r.category_label, total: 0, count: 0};
+    bycat[r.category].total += r.amount;
+    bycat[r.category].count += 1;
+  });
+  const sorted = Object.entries(bycat).sort((a,b) => b[1].total - a[1].total);
+  const total  = inc.reduce((s, r) => s + r.amount, 0);
+
+  const list = document.getElementById('incomeList');
+  if (!inc.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--ink-3);font-style:italic;padding:16px 0">No income records for this period.<br>Say "I received $X from [source]" to add income.</div>';
+    return;
+  }
+
+  let html = sorted.map(([key, v]) =>
+    `<div class="income-row">
+      <div class="income-label">${v.label}</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div class="income-amt">${fmt(v.total)}</div>
+        <div class="income-count">${v.count} record${v.count !== 1 ? 's' : ''}</div>
+      </div>
+    </div>`
+  ).join('');
+  html += `<div class="income-row" style="border-top:1px solid var(--rule-mid);margin-top:4px">
+    <div style="font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)">Total</div>
+    <div class="income-amt" style="font-size:16px">${fmt(total)}</div>
+  </div>`;
+  list.innerHTML = html;
+}
+
+// ── MILEAGE ───────────────────────────────────────────────────────────────
+function renderMileage() {
+  const recs = filteredMileage();
+  const sub  = document.getElementById('mileageSub');
+  if (sub) sub.textContent = activeMonth === 'ytd' ? 'YTD — all months' : monthLabel(activeMonth);
+
+  const totalMiles = recs.reduce((s, r) => s + r.miles, 0);
+  const totalDed   = recs.reduce((s, r) => s + r.deductible_amount, 0);
+  const rate       = DATA.meta.mileage_rate;
+
+  document.getElementById('mileageSummary').innerHTML = `
+    <div class="mileage-kpi"><div class="mileage-kpi-label">Total Miles</div><div class="mileage-kpi-value">${fmtNum(totalMiles)}</div><div class="mileage-kpi-sub">${recs.length} trip${recs.length !== 1 ? 's' : ''}</div></div>
+    <div class="mileage-kpi"><div class="mileage-kpi-label">Mileage Deduction</div><div class="mileage-kpi-value" style="color:var(--green)">${fmt(totalDed)}</div><div class="mileage-kpi-sub">@ $${rate}/mi IRS rate</div></div>
+  `;
+
+  const list = document.getElementById('mileageList');
+  if (!recs.length) {
+    list.innerHTML = '<div class="mileage-empty">No mileage records for this period.<br>Say "I drove [X] miles to [destination] for [purpose]" to add a trip.</div>';
+    return;
+  }
+  list.innerHTML = recs.slice(0, 20).map(r =>
+    `<div class="mileage-row">
+      <div class="mileage-date">${r.date}</div>
+      <div class="mileage-route" title="${r.start} → ${r.end}: ${r.purpose}">${r.start} → ${r.end}</div>
+      <div class="mileage-miles">${fmtNum(r.miles)}mi</div>
+      <div class="mileage-ded">${fmt(r.deductible_amount)}</div>
+    </div>`
+  ).join('');
+  if (recs.length > 20) list.innerHTML += `<div style="font-family:var(--f-mono);font-size:10px;color:var(--ink-4);padding:8px 0">+ ${recs.length - 20} more trips</div>`;
+}
+
+// ── QUARTERLY ESTIMATE ────────────────────────────────────────────────────
+function renderQE() {
+  // Recompute from filtered data so the estimate reflects the selected period,
+  // not the fixed YTD snapshot baked in at Python generation time.
+  const txns = DATA.transactions.filter(t => activeMonth === 'ytd' || t.date.startsWith(activeMonth));
+  const inc  = filteredIncome();
+  const mi   = filteredMileage();
+
+  const deductible = txns.reduce((s, t) => s + t.deductible_amount, 0);
+  const income     = inc.reduce((s, r) => s + r.amount, 0);
+  const miDed      = mi.reduce((s, r) => s + r.deductible_amount, 0);
+  const net        = income - deductible - miDed;
+  const seTax      = Math.max(0, net * 0.9235 * 0.153);
+  const fedTax     = Math.max(0, net * 0.12);
+  const totalTax   = seTax + fedTax;
+  const periodLabel = activeMonth === 'ytd' ? 'YTD' : monthLabel(activeMonth);
+
+  document.getElementById('qeGrid').innerHTML = `
+    <div class="qe-cell">
+      <div class="qe-label">Net Profit &mdash; ${periodLabel}</div>
+      <div class="qe-value ${net >= 0 ? 'green' : 'red'}">${net < 0 ? '-' : ''}${fmt(Math.abs(net))}</div>
+      <div class="qe-note">Income minus deductible expenses and mileage</div>
+    </div>
+    <div class="qe-cell">
+      <div class="qe-label">SE Tax Est.</div>
+      <div class="qe-value amber">${fmt(seTax)}</div>
+      <div class="qe-note">Net profit × 92.35% × 15.3%</div>
+    </div>
+    <div class="qe-cell">
+      <div class="qe-label">Total Est. Tax</div>
+      <div class="qe-value amber">${fmt(totalTax)}</div>
+      <div class="qe-note">SE tax + ~12% federal income tax placeholder</div>
+    </div>
+  `;
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const grid = document.getElementById('heatmapGrid');
+  const tip  = document.getElementById('hmTip');
+  const sub  = document.getElementById('heatmapSub');
+  grid.innerHTML = '';
+
+  let year, month, daysInMonth, startDow;
+
+  if (activeMonth === 'ytd') {
+    // Show current year monthly totals as a 12-col horizontal bar instead
+    if (sub) sub.textContent = 'Monthly spending — ' + DATA.meta.tax_year;
+    renderYearHeatmap(grid, tip);
+    return;
+  }
+
+  const [y, m] = activeMonth.split('-');
+  year   = parseInt(y);
+  month  = parseInt(m);
+  const d = new Date(year, month - 1, 1);
+  daysInMonth = new Date(year, month, 0).getDate();
+  startDow    = d.getDay(); // 0=Sun
+
+  if (sub) sub.textContent = monthLabel(activeMonth);
+
+  const dows = ['S','M','T','W','T','F','S'];
+  // Header
+  const emptyH = document.createElement('div');
+  emptyH.className = 'hm-week-lbl';
+  grid.appendChild(emptyH);
+  dows.forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'hm-dow';
+    h.textContent = d;
+    grid.appendChild(h);
+  });
+
+  const weeks = Math.ceil((startDow + daysInMonth) / 7);
+  const hmMap = {};
+  Object.entries(DATA.heatmap).forEach(([date, v]) => {
+    if (date.startsWith(activeMonth)) hmMap[parseInt(date.split('-')[2])] = v;
+  });
+
+  const allVals = Object.values(hmMap);
+  const maxV = allVals.length ? Math.max(...allVals) : 1;
+
+  for (let w = 0; w < weeks; w++) {
+    const wLbl = document.createElement('div');
+    wLbl.className = 'hm-week-lbl';
+    const wDay = w * 7 - startDow + 1;
+    wLbl.textContent = (wDay >= 1 && wDay <= daysInMonth) ? wDay : '';
+    grid.appendChild(wLbl);
+
+    for (let dow = 0; dow < 7; dow++) {
+      const slot = w * 7 + dow;
+      const day  = slot - startDow + 1;
+      const cell = document.createElement('div');
+
+      if (day < 1 || day > daysInMonth) {
+        cell.className = 'hm-cell empty';
+      } else {
+        const v    = hmMap[day] || 0;
+        const tier = v === 0 ? 't0' : v <= maxV * 0.25 ? 't1' : v <= maxV * 0.65 ? 't2' : 't3';
+        cell.className = 'hm-cell ' + tier;
+        const num = document.createElement('div');
+        num.className = 'hm-day-num';
+        num.textContent = day;
+        cell.appendChild(num);
+        if (v > 0) {
+          cell.addEventListener('mouseenter', e => {
+            tip.textContent = `${activeMonth}-${String(day).padStart(2,'0')}: ${fmt(v)}`;
+            tip.classList.add('show');
+          });
+          cell.addEventListener('mousemove', e => {
+            tip.style.left = (e.clientX + 12) + 'px';
+            tip.style.top  = (e.clientY - 30) + 'px';
+          });
+          cell.addEventListener('mouseleave', () => tip.classList.remove('show'));
+        }
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function renderYearHeatmap(grid, tip) {
+  // 12-month bar chart (monthly totals)
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const year = DATA.meta.tax_year;
+  const totals = names.map((_, i) => {
+    const key = year + '-' + String(i+1).padStart(2,'0');
+    return DATA.by_month[key] ? DATA.by_month[key].expenses : 0;
+  });
+  const maxV = Math.max(...totals, 1);
+
+  // Override grid CSS for year view
+  grid.style.gridTemplateColumns = 'repeat(12, 1fr)';
+  grid.style.alignItems = 'end';
+  grid.style.gap = '4px';
+  grid.style.marginTop = '8px';
+
+  names.forEach((name, i) => {
+    const col = document.createElement('div');
+    col.style.display = 'flex';
+    col.style.flexDirection = 'column';
+    col.style.alignItems = 'center';
+    col.style.gap = '4px';
+
+    const bar = document.createElement('div');
+    const pct = Math.round(totals[i] / maxV * 100);
+    bar.style.width = '100%';
+    bar.style.height = (Math.max(pct, totals[i] > 0 ? 4 : 0)) + 'px';
+    bar.style.background = totals[i] > 0 ? 'rgba(26,84,50,0.5)' : 'var(--rule-faint)';
+    bar.style.borderRadius = '2px';
+    bar.style.maxHeight = '80px';
+    bar.style.transition = 'height .4s';
+
+    const lbl = document.createElement('div');
+    lbl.style.fontFamily = 'var(--f-mono)';
+    lbl.style.fontSize = '9px';
+    lbl.style.color = 'var(--ink-3)';
+    lbl.textContent = name;
+
+    if (totals[i] > 0) {
+      bar.title = name + ' ' + year + ': ' + fmt(totals[i]);
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mouseenter', e => {
+        tip.textContent = name + ' ' + year + ': ' + fmt(totals[i]);
+        tip.classList.add('show');
+      });
+      bar.addEventListener('mousemove', e => {
+        tip.style.left = (e.clientX + 12) + 'px';
+        tip.style.top  = (e.clientY - 30) + 'px';
+      });
+      bar.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    }
+
+    col.appendChild(bar);
+    col.appendChild(lbl);
+    grid.appendChild(col);
+  });
+}
+
+// ── TRANSACTION LOG ───────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  activeFilter = f;
+  currentPage  = 1;
+  document.querySelectorAll('.lf').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLog();
+}
+
+function renderLog() {
+  const txns = filteredTxns();
+  const total = txns.length;
+  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (currentPage > pages) currentPage = pages;
+
+  const start = (currentPage - 1) * PER_PAGE;
+  const page  = txns.slice(start, start + PER_PAGE);
+  const pageTotal = page.reduce((s, t) => s + t.amount, 0);
+
+  const periodLabel = activeMonth === 'ytd' ? 'YTD ' + DATA.meta.tax_year : monthLabel(activeMonth);
+  document.getElementById('logCount').textContent = `${total} transaction${total !== 1 ? 's' : ''} \u00b7 ${periodLabel}`;
+  document.getElementById('footerLabel').textContent = `${start+1}–${start+page.length} of ${total} \u00b7 ${periodLabel}`;
+  document.getElementById('pageTotal').textContent = fmt(pageTotal);
+
+  const tbody = document.getElementById('logBody');
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;font-size:13px;color:var(--ink-3);font-style:italic">No transactions for this filter.</td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(t => {
+      const stClass = {matched:'matched', missing:'missing', review:'review'}[t.receipt_status] || 'missing';
+      const stLabel = {matched:'Matched', missing:'Missing', review:'Review'}[t.receipt_status] || 'Missing';
+      const dedDisplay = t.deductible_pct < 100 && t.deductible ? `${fmt(t.deductible_amount)} (${t.deductible_pct}%)` : t.deductible ? fmt(t.deductible_amount) : '—';
+      return `<tr>
+        <td class="td-date">${t.date}</td>
+        <td class="td-vendor">${t.vendor}${t.notes ? `<div style="font-size:10px;color:var(--ink-3);margin-top:1px">${t.notes}</div>` : ''}</td>
+        <td class="td-cat" style="padding:0 8px">${t.category_label}</td>
+        <td class="td-status"><span class="st ${stClass}">${stLabel}</span></td>
+        <td class="td-amt">${fmt(t.amount)}</td>
+        <td class="td-ded">${dedDisplay}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination
+  const pag = document.getElementById('pagination');
+  if (pages <= 1) { pag.innerHTML = ''; return; }
+  let pagHtml = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>Prev</button>`;
+  for (let p = 1; p <= pages; p++) {
+    if (p === 1 || p === pages || Math.abs(p - currentPage) <= 1) {
+      pagHtml += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    } else if (Math.abs(p - currentPage) === 2) {
+      pagHtml += `<span class="pg-ellipsis">&hellip;</span>`;
+    }
+  }
+  pagHtml += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>Next</button>`;
+  pag.innerHTML = pagHtml;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderLog();
+  document.querySelector('.log').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const txns = filteredTxns();
+  const rows = [['Date','Vendor','Category','Receipt Status','Amount','Deductible Amount','Deductible Pct','Notes']];
+  txns.forEach(t => rows.push([t.date, t.vendor, t.category_label, t.receipt_status, t.amount.toFixed(2), t.deductible_amount.toFixed(2), t.deductible_pct, t.notes.replace(/,/g,'')]));
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  const label = activeMonth === 'ytd' ? DATA.meta.tax_year : activeMonth;
+  a.download = `tax-ledger-${label}.csv`;
+  a.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+function init() {
+  // Default to most recent month if any, otherwise ytd
+  if (DATA.all_months.length) {
+    activeMonth = DATA.all_months[DATA.all_months.length - 1];
+  }
+  renderMasthead();
+  renderAlerts();
+  renderMonthNav();
+  renderKPIs();
+  renderCategories();
+  renderIncome();
+  renderMileage();
+  renderQE();
+  renderHeatmap();
+  renderLog();
+}
+
+init();
+</script>
+</body>
+</html>

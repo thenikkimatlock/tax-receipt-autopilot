@@ -1,0 +1,6 @@
+[
+  {"id":"inc001","date":"2026-01-31","source":"VoiceForeman Client - Demo","amount":297.00,"category":"services","notes":"First client setup fee","payer":"Demo Contractor LLC"},
+  {"id":"inc002","date":"2026-02-15","source":"Affiliate Commission - AIFluencer Studio","amount":97.00,"category":"affiliate_commissions","notes":"First affiliate sale!","payer":"AIFluencer Studio"},
+  {"id":"inc003","date":"2026-02-28","source":"VoiceForeman Monthly Retainer","amount":297.00,"category":"services","notes":"Feb recurring client","payer":"Demo Contractor LLC"},
+  {"id":"inc004","date":"2026-03-09","source":"Affiliate Commission - Navia AI Studio","amount":197.00,"category":"affiliate_commissions","notes":"Navia affiliate sale","payer":"Navia AI Studio"}
+]
